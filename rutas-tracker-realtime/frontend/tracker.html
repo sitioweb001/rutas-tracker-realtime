@@ -1,0 +1,39 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rastreador</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Rastreador de transporte</h1>
+      <p class="small">Permite compartir tu ubicación en tiempo real. Necesita iniciar sesión como <b>tracker</b>.</p>
+    </div>
+
+    <div class="card">
+      <h3>Iniciar sesión</h3>
+      <div class="label">Email</div>
+      <input id="email" value="driver@demo.com"/>
+      <div class="label">Contraseña</div>
+      <input id="pass" type="password" value="driver123"/>
+      <p></p>
+      <button class="btn" id="loginBtn">Entrar</button>
+      <p id="loginMsg" class="small"></p>
+    </div>
+
+    <div class="card">
+      <h3>Estado del rastreo</h3>
+      <p id="status">No iniciado</p>
+      <button class="btn" id="startBtn" disabled>Iniciar rastreo</button>
+      <button class="btn" id="stopBtn" disabled>Detener</button>
+      <p class="small">Consejos: Mantén la pantalla encendida o usa una PWA para mayor estabilidad. El GPS consume batería.</p>
+    </div>
+  </div>
+
+  <script src="./js/tracker.js"></script>
+</body>
+</html>
