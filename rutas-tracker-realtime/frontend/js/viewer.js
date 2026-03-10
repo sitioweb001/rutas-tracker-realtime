@@ -42,10 +42,11 @@
     setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
-  // Unirse a la sala del transporte
+  // Únete a la sala del transporte
   socket.emit('join', { transportId });
+  console.log('[viewer] joined room for', transportId);
 
-  // Al cargar, intenta centrar con la última ubicación disponible
+  // 1) Cargar última ubicación (para centrar)
   fetch(`/api/location/${encodeURIComponent(transportId)}`)
     .then(r => r.ok ? r.json() : null)
     .then(data => {
@@ -54,9 +55,20 @@
         map.setView([data.lat, data.lng], 16);
       }
     })
-    .catch(() => { /* no-op */ });
+    .catch(err => console.warn('[viewer] last location fetch error', err));
 
-  // Cuando llegan ubicaciones en tiempo real
+  // 2) Consultar estado actual (online/offline) al abrir
+  fetch(`/api/location/status/${encodeURIComponent(transportId)}`)
+    .then(r => r.ok ? r.json() : { online: false })
+    .then(({ online }) => {
+      console.log('[viewer] initial status online=', online);
+      if (online) {
+        showBanner('✅ El admin ya nos está compartiendo ubicación', 'ok');
+      }
+    })
+    .catch(err => console.warn('[viewer] status fetch error', err));
+
+  // 3) Ubicaciones en tiempo real
   socket.on('location', (payload) => {
     if (!payload || payload.transportId !== transportId) return;
     const { lat, lng } = payload;
@@ -66,9 +78,10 @@
     map.panTo([lat, lng]);
   });
 
-  // ESTADO ONLINE/OFFLINE desde el backend
+  // 4) Estado ONLINE/OFFLINE en tiempo real
   socket.on('status', ({ transportId: t, online }) => {
     if (t !== transportId) return;
+    console.log('[viewer] live status:', online);
     if (online) {
       showBanner('✅ El admin ya nos está compartiendo ubicación', 'ok');
     } else {
@@ -76,4 +89,3 @@
     }
   });
 })();
-``
