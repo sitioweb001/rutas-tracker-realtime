@@ -6,10 +6,19 @@
   <title>Mapa en tiempo real</title>
 
   <!-- Leaflet CSS + JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 
-  <!-- Socket.IO (servido por tu backend de Render) -->
+  <!-- Socket.IO (servido por tu backend en Render) -->
   <script src="/socket.io/socket.io.js"></script>
 
   <!-- Tus estilos -->
@@ -24,12 +33,11 @@
     <div id="map" class="card"></div>
   </div>
 
-  <!-- Tus scripts -->
+  <!-- Scripts del viewer -->
   <script src="./js/common.js"></script>
   <script src="./js/viewer.js"></script>
 
-  <!-- (Opcional) Si quieres la barra definida en HTML (el JS también la puede crear solo) -->
-  <!--
+  <!-- (Opcional) Si quieres la barra definida en HTML (el JS también la crea solo)
   <div id="liveStatusBar" class="status-offline">
     <div id="liveStatusDot"></div>
     <div id="liveStatusText">🔴 Detenido</div>
