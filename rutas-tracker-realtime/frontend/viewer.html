@@ -3,11 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ver transporte</title>
+  <title>Mapa en tiempo real</title>
+
+  <!-- Leaflet -->
   https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
   https://unpkg.com/leaflet@1.9.4/dist/leaflet.js</script>
-  <!-- Si abres desde Render, este path está bien -->
+
+  <!-- Socket.IO servido por tu backend (Render) -->
   /socket.io/socket.io.js</script>
+
+  <!-- Tus estilos -->
   ./css/styles.css
 </head>
 <body>
@@ -22,11 +27,5 @@
   <!-- Scripts del viewer -->
   ./js/common.js</script>
   ./js/viewer.js</script>
-
-  <!-- Barra de estado fija abajo -->
-  <div id="liveStatusBar" class="status-offline">
-    <div id="liveStatusDot"></div>
-    <div id="liveStatusText">🔴 Detenido</div>
-  </div>
 </body>
 </html>
