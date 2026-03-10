@@ -1,0 +1,18 @@
+
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rastreador</title>
+<link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="container"><div class="header"><h1>Rastreador</h1></div>
+    <div class="card"><div class="label">Email</div><input id="email" value="driver@demo.com"/>
+    <div class="label">Contraseña</div><input id="pass" type="password" value="driver123"/>
+    <p><button class="btn" id="loginBtn">Entrar</button></p>
+    <p id="loginMsg" class="small"></p>
+    </div>
+    <div class="card"><h3>Estado</h3><p id="status">No iniciado</p><button class="btn" id="startBtn" disabled>Iniciar rastreo</button> <button class="btn" id="stopBtn" disabled>Detener</button></div>
+  </div>
+  <script src="./js/tracker.js"></script>
+</body></html>
