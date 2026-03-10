@@ -1,9 +1,9 @@
 (function () {
   // === Ajustes ===
-  const REFRESH_MS = 3000; // 2000 (2s) / 3000 (3s) / 5000 (5s)
+  const REFRESH_MS = 3000; // 2000 (2s) | 3000 (3s) | 5000 (5s)
   const DEFAULT_CENTER = [13.6929, -89.2182]; // San Salvador
 
-  // === Util: inyectar CSS si no existe ===
+  // === Inyectar CSS de la barra si no existe ===
   function ensureStatusBarStyles() {
     if (document.getElementById('liveStatusStyles')) return;
     const css = `
@@ -38,7 +38,7 @@
     document.head.appendChild(style);
   }
 
-  // === Util: crear barra si no existe ===
+  // === Crear barra si no existe ===
   function ensureStatusBar() {
     let bar = document.getElementById('liveStatusBar');
     if (!bar) {
@@ -54,7 +54,6 @@
     return bar;
   }
 
-  // Inyectar estilos y barra
   ensureStatusBarStyles();
   const bar = ensureStatusBar();
   const barText = document.getElementById('liveStatusText');
@@ -72,31 +71,30 @@
     }
   }
 
-  // === Params de transporte ===
+  // === Parámetros ===
   const params = new URLSearchParams(location.search);
   const transportId = params.get('transport') || 't1';
   const titleEl = document.getElementById('title');
   if (titleEl) titleEl.textContent = `Transporte: ${transportId}`;
 
-  // === Socket.IO (cargado desde /socket.io/socket.io.js en Render) ===
+  // === Socket.IO (cargado desde /socket.io/socket.io.js) ===
   const socket = io();
 
-  // === Leaflet Map ===
+  // === Mapa ===
   const map = L.map('map').setView(DEFAULT_CENTER, 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
-
   const marker = L.marker(DEFAULT_CENTER, { draggable: false }).addTo(map);
 
-  // Control para evitar retrocesos si llegan puntos “viejos”
+  // Control para no aplicar puntos más viejos
   let lastTs = 0;
 
   // Unirse a la sala
   socket.emit('join', { transportId });
 
-  // 1) Centrar con última ubicación al abrir (si existe)
+  // 1) Última ubicación al abrir
   fetch(`/api/location/${encodeURIComponent(transportId)}`)
     .then(r => r.ok ? r.json() : null)
     .then(data => {
@@ -108,31 +106,31 @@
     })
     .catch(() => {});
 
-  // 2) Consultar estado ONLINE al abrir (si ya estaba transmitiendo)
+  // 2) Estado actual online/offline al abrir
   fetch(`/api/location/status/${encodeURIComponent(transportId)}`)
     .then(r => r.ok ? r.json() : { online: false })
     .then(({ online }) => setOnlineUI(online))
     .catch(() => setOnlineUI(false));
 
-  // 3) Escuchar ubicaciones en tiempo real por socket
+  // 3) Ubicaciones en tiempo real (socket)
   socket.on('location', (payload) => {
     if (!payload || payload.transportId !== transportId) return;
     const { lat, lng, ts } = payload;
     if (typeof lat !== 'number' || typeof lng !== 'number') return;
-    if (ts && ts < lastTs) return; // ignora si es más viejo
+    if (ts && ts < lastTs) return;
     lastTs = ts || Date.now();
 
     marker.setLatLng([lat, lng]);
     map.panTo([lat, lng]);
   });
 
-  // 4) Escuchar estado ONLINE/OFFLINE en tiempo real
+  // 4) Estado online/offline en tiempo real (socket)
   socket.on('status', ({ transportId: t, online }) => {
     if (t !== transportId) return;
     setOnlineUI(online);
   });
 
-  // 5) Polling como respaldo cada REFRESH_MS
+  // 5) Polling de respaldo cada REFRESH_MS
   setInterval(() => {
     fetch(`/api/location/${encodeURIComponent(transportId)}`)
       .then(r => r.ok ? r.json() : null)
@@ -144,8 +142,7 @@
         lastTs = ts || Date.now();
 
         marker.setLatLng([lat, lng]);
-        // Si quieres que el mapa siga agresivamente en cada poll:
-        // map.panTo([lat, lng]);
+        // map.panTo([lat, lng]); // Descomenta si quieres que siga en cada poll
       })
       .catch(() => {});
   }, REFRESH_MS);
