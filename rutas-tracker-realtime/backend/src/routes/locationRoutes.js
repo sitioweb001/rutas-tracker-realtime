@@ -7,7 +7,7 @@ export const locationRouter = Router();
 // ---------------------- ONLINE/OFFLINE ----------------------
 // Mapa: transportId -> timeoutId. Si no hay señales por X ms => offline.
 const onlineTimers = new Map();
-const ONLINE_TTL_MS = 10_000; // 60s sin recibir puntos => offline
+const ONLINE_TTL_MS = 60_000; // 60s sin recibir puntos => offline
 
 function emitStatus(app, transportId, online) {
   const io = app.get('io');
@@ -38,6 +38,13 @@ locationRouter.get('/:transportId', (req, res) => {
   const last = store.lastLocations.get(transportId);
   if (!last) return res.status(404).json({ error: 'Sin datos' });
   res.json(last);
+});
+
+// Estado actual online/offline (nuevo)
+locationRouter.get('/status/:transportId', (req, res) => {
+  const { transportId } = req.params;
+  const online = onlineTimers.has(transportId);
+  res.json({ transportId, online, ts: Date.now() });
 });
 
 // ---------------------- RASTREADOR ----------------------
