@@ -7,7 +7,7 @@ export const locationRouter = Router();
 // ---------------------- ONLINE/OFFLINE ----------------------
 // Mapa: transportId -> timeoutId. Si no hay señales por X ms => offline.
 const onlineTimers = new Map();
-const ONLINE_TTL_MS = 60_000; // 60s sin recibir puntos => offline
+const ONLINE_TTL_MS = 10_000; // 60s sin recibir puntos => offline
 
 function emitStatus(app, transportId, online) {
   const io = app.get('io');
