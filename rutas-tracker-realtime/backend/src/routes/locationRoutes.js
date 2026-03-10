@@ -1,11 +1,38 @@
-
 import { Router } from 'express';
 import { store } from '../services/store.js';
 import { authRequired } from '../middleware/auth.js';
 
 export const locationRouter = Router();
 
-// Última ubicación de un transporte (público)
+// ---------------------- ONLINE/OFFLINE ----------------------
+// Mapa: transportId -> timeoutId. Si no hay señales por X ms => offline.
+const onlineTimers = new Map();
+const ONLINE_TTL_MS = 60_000; // 60s sin recibir puntos => offline
+
+function emitStatus(app, transportId, online) {
+  const io = app.get('io');
+  io.to(`transport:${transportId}`).emit('status', { transportId, online, ts: Date.now() });
+}
+
+function markOnline(app, transportId) {
+  // Si no estaba en línea, notifícalo ahora
+  if (!onlineTimers.has(transportId)) {
+    emitStatus(app, transportId, true);
+  } else {
+    clearTimeout(onlineTimers.get(transportId));
+  }
+
+  // Reprograma el "auto-offline" si no llegan más puntos
+  const to = setTimeout(() => {
+    onlineTimers.delete(transportId);
+    emitStatus(app, transportId, false);
+  }, ONLINE_TTL_MS);
+
+  onlineTimers.set(transportId, to);
+}
+
+// ---------------------- RUTAS PÚBLICAS ----------------------
+// Última ubicación pública (útil para centrar el mapa al cargar)
 locationRouter.get('/:transportId', (req, res) => {
   const { transportId } = req.params;
   const last = store.lastLocations.get(transportId);
@@ -13,19 +40,36 @@ locationRouter.get('/:transportId', (req, res) => {
   res.json(last);
 });
 
-// Tracker envía ubicación (requiere token de tracker)
+// ---------------------- RASTREADOR ----------------------
+// El tracker envía ubicación (requiere token con rol=tracker)
 locationRouter.post('/', authRequired, (req, res) => {
   const user = req.user;
   if (user.role !== 'tracker') return res.status(403).json({ error: 'Solo trackers' });
+
   const { lat, lng, speed, heading, accuracy } = req.body || {};
   if (typeof lat !== 'number' || typeof lng !== 'number') {
     return res.status(400).json({ error: 'lat/lng inválidos' });
   }
+
   const transportId = user.transportId;
-  const payload = { transportId, lat, lng, speed: speed ?? null, heading: heading ?? null, accuracy: accuracy ?? null, ts: Date.now() };
+  const payload = {
+    transportId,
+    lat, lng,
+    speed: speed ?? null,
+    heading: heading ?? null,
+    accuracy: accuracy ?? null,
+    ts: Date.now(),
+  };
+
+  // Guarda última ubicación
   store.lastLocations.set(transportId, payload);
-  // Notificar por Socket.IO (inyectado via app.get('io'))
+
+  // Notifica nueva ubicación a los viewers
   const io = req.app.get('io');
   io.to(`transport:${transportId}`).emit('location', payload);
+
+  // Marca como online y programa auto-offline
+  markOnline(req.app, transportId);
+
   res.json({ ok: true });
 });
