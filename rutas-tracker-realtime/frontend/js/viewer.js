@@ -1,10 +1,32 @@
-(function() {
+(function () {
+  // Cambia aquí la frecuencia de refresco por polling: 2000 (2s) / 3000 (3s) / 5000 (5s)
+  const REFRESH_MS = 2000;
+
   const params = new URLSearchParams(location.search);
   const transportId = params.get('transport') || 't1';
+
   const titleEl = document.getElementById('title');
   if (titleEl) titleEl.textContent = `Transporte: ${transportId}`;
 
-  // Conexión con Socket.IO (servido por tu backend)
+  // Elementos de la barra fija
+  const bar = document.getElementById('liveStatusBar');
+  const barText = document.getElementById('liveStatusText');
+
+  // Funciones para setear estado visual
+  function setOnlineUI(isOnline){
+    if(!bar || !barText) return;
+    if(isOnline){
+      bar.classList.add('status-online');
+      bar.classList.remove('status-offline');
+      barText.textContent = '🟢 En vivo';
+    }else{
+      bar.classList.remove('status-online');
+      bar.classList.add('status-offline');
+      barText.textContent = '🔴 Detenido';
+    }
+  }
+
+  // Conexión con Socket.IO (misma URL del backend)
   const socket = io();
 
   // Mapa inicial (centra en San Salvador por defecto)
@@ -16,76 +38,68 @@
 
   const marker = L.marker([13.6929, -89.2182], { draggable: false }).addTo(map);
 
-  // ------- Banner visual (online/offline/primer fix) -------
-  function showBanner(msg, type = 'ok') {
-    let el = document.getElementById('banner');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'banner';
-      el.style.position = 'fixed';
-      el.style.top = '16px';
-      el.style.left = '50%';
-      el.style.transform = 'translateX(-50%)';
-      el.style.padding = '10px 16px';
-      el.style.borderRadius = '10px';
-      el.style.zIndex = '9999';
-      el.style.fontWeight = '600';
-      el.style.boxShadow = '0 10px 30px rgba(0,0,0,.25)';
-      el.style.maxWidth = '90vw';
-      el.style.textAlign = 'center';
-      document.body.appendChild(el);
-    }
-    el.style.background = type === 'ok' ? '#16a34a' : '#ef4444';
-    el.style.color = '#fff';
-    el.textContent = msg;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 4000);
-  }
+  // Para evitar “retrocesos” por polling y socket a la vez
+  let lastTs = 0;
 
   // Únete a la sala del transporte
   socket.emit('join', { transportId });
-  console.log('[viewer] joined room for', transportId);
 
-  // 1) Cargar última ubicación (para centrar)
+  // 1) Centrar con la última ubicación al cargar (si existe)
   fetch(`/api/location/${encodeURIComponent(transportId)}`)
     .then(r => r.ok ? r.json() : null)
     .then(data => {
       if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
         marker.setLatLng([data.lat, data.lng]);
         map.setView([data.lat, data.lng], 16);
+        lastTs = data.ts || Date.now();
       }
     })
-    .catch(err => console.warn('[viewer] last location fetch error', err));
+    .catch(()=>{});
 
   // 2) Consultar estado actual (online/offline) al abrir
   fetch(`/api/location/status/${encodeURIComponent(transportId)}`)
     .then(r => r.ok ? r.json() : { online: false })
-    .then(({ online }) => {
-      console.log('[viewer] initial status online=', online);
-      if (online) {
-        showBanner('✅ El admin ya nos está compartiendo ubicación', 'ok');
-      }
-    })
-    .catch(err => console.warn('[viewer] status fetch error', err));
+    .then(({ online }) => setOnlineUI(online))
+    .catch(() => setOnlineUI(false));
 
-  // 3) Ubicaciones en tiempo real
+  // 3) Ubicaciones en tiempo real por socket
   socket.on('location', (payload) => {
     if (!payload || payload.transportId !== transportId) return;
-    const { lat, lng } = payload;
+    const { lat, lng, ts } = payload;
     if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    // Aplica solo si es más reciente
+    if (ts && ts < lastTs) return;
+    lastTs = ts || Date.now();
 
     marker.setLatLng([lat, lng]);
     map.panTo([lat, lng]);
   });
 
-  // 4) Estado ONLINE/OFFLINE en tiempo real
+  // 4) Estado ONLINE/OFFLINE en tiempo real por socket
   socket.on('status', ({ transportId: t, online }) => {
     if (t !== transportId) return;
-    console.log('[viewer] live status:', online);
-    if (online) {
-      showBanner('✅ El admin ya nos está compartiendo ubicación', 'ok');
-    } else {
-      showBanner('⚠️ El rastreo se detuvo', 'error');
-    }
+    setOnlineUI(online);
   });
+
+  // 5) Polling cada REFRESH_MS como respaldo/“keep fresh”
+  setInterval(() => {
+    fetch(`/api/location/${encodeURIComponent(transportId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        const { lat, lng, ts } = data;
+        if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+        // Solo si es más reciente que lo último aplicado
+        if (ts && ts < lastTs) return;
+        lastTs = ts || Date.now();
+
+        marker.setLatLng([lat, lng]);
+        // Si quieres que el mapa siga agresivamente en cada poll:
+        // map.panTo([lat, lng]);
+      })
+      .catch(()=>{ /* no-op */ });
+  }, REFRESH_MS);
+
 })();
