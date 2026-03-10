@@ -5,20 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mapa en tiempo real</title>
 
-  <!-- Leaflet -->
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.js</script>
+  <!-- Leaflet CSS + JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Socket.IO servido por tu backend (Render) -->
- /socket.io/socket.io.js</script>
+  <!-- Socket.IO (servido por tu backend de Render) -->
+  <script src="/socket.io/socket.io.js"></script>
 
   <!-- Tus estilos -->
-  ./css/styles.css
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
-  <div id="liveStatusBar" class="status-offline">
-  <div id="liveStatusDot"></div>
-  <div id="liveStatusText">🔴 Detenido</div>
-</div>
 <body>
   <div class="container">
     <div class="header">
@@ -28,8 +24,16 @@
     <div id="map" class="card"></div>
   </div>
 
-  <!-- Scripts del viewer -->
-  ./js/common.js</script>
-  ./js/viewer.js</script>
+  <!-- Tus scripts -->
+  <script src="./js/common.js"></script>
+  <script src="./js/viewer.js"></script>
+
+  <!-- (Opcional) Si quieres la barra definida en HTML (el JS también la puede crear solo) -->
+  <!--
+  <div id="liveStatusBar" class="status-offline">
+    <div id="liveStatusDot"></div>
+    <div id="liveStatusText">🔴 Detenido</div>
+  </div>
+  -->
 </body>
 </html>
