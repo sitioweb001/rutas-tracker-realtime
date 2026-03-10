@@ -1,0 +1,38 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RutaBinaes – Demo</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>RutaBinaes</h1>
+      <p class="small">Selecciona tu transporte o abre el modo rastreador.</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>Ver transporte</h3>
+        <div class="label">ID de transporte</div>
+        <input id="tId" value="t1" />
+        <p></p>
+        <a class="btn" id="goView">Abrir mapa</a>
+      </div>
+      <div class="card">
+        <h3>Rastreador (conductor)</h3>
+        <p>Entra como tracker para enviar tu ubicación.</p>
+        <a class="btn" href="./tracker.html">Abrir rastreador</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('goView').onclick = () => {
+      const t = document.getElementById('tId').value.trim() || 't1';
+      location.href = `./viewer.html?transport=${encodeURIComponent(t)}`;
+    }
+  </script>
+</body>
+</html>
