@@ -5,6 +5,7 @@ import { authRequired } from '../middleware/auth.js';
 export const locationRouter = Router();
 
 // ---------------------- ONLINE/OFFLINE ----------------------
+// Mapa: transportId -> timeoutId. Si no hay señales por X ms => offline.
 const onlineTimers = new Map();
 const ONLINE_TTL_MS = 60_000; // 60s sin recibir puntos => offline
 
@@ -14,19 +15,24 @@ function emitStatus(app, transportId, online) {
 }
 
 function markOnline(app, transportId) {
+  // Si no estaba en línea, notifícalo ahora
   if (!onlineTimers.has(transportId)) {
     emitStatus(app, transportId, true);
   } else {
     clearTimeout(onlineTimers.get(transportId));
   }
+
+  // Reprograma el "auto-offline" si no llegan más puntos
   const to = setTimeout(() => {
     onlineTimers.delete(transportId);
     emitStatus(app, transportId, false);
   }, ONLINE_TTL_MS);
+
   onlineTimers.set(transportId, to);
 }
 
-// Última ubicación pública
+// ---------------------- RUTAS PÚBLICAS ----------------------
+// Última ubicación pública (útil para centrar el mapa al cargar)
 locationRouter.get('/:transportId', (req, res) => {
   const { transportId } = req.params;
   const last = store.lastLocations.get(transportId);
@@ -34,14 +40,15 @@ locationRouter.get('/:transportId', (req, res) => {
   res.json(last);
 });
 
-// Estado actual online/offline
+// Estado actual online/offline (nuevo)
 locationRouter.get('/status/:transportId', (req, res) => {
   const { transportId } = req.params;
   const online = onlineTimers.has(transportId);
   res.json({ transportId, online, ts: Date.now() });
 });
 
-// Tracker envía ubicación
+// ---------------------- RASTREADOR ----------------------
+// El tracker envía ubicación (requiere token con rol=tracker)
 locationRouter.post('/', authRequired, (req, res) => {
   const user = req.user;
   if (user.role !== 'tracker') return res.status(403).json({ error: 'Solo trackers' });
@@ -61,12 +68,14 @@ locationRouter.post('/', authRequired, (req, res) => {
     ts: Date.now(),
   };
 
-  // Guarda y emite
+  // Guarda última ubicación
   store.lastLocations.set(transportId, payload);
+
+  // Notifica nueva ubicación a los viewers
   const io = req.app.get('io');
   io.to(`transport:${transportId}`).emit('location', payload);
 
-  // Marca online y programa auto-offline
+  // Marca como online y programa auto-offline
   markOnline(req.app, transportId);
 
   res.json({ ok: true });
