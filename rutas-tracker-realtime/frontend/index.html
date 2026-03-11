@@ -1,0 +1,55 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RutaBinaes – Inicio</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>RutaBinaes</h1>
+      <p class="small">Selecciona el transporte para visualizar el mapa o abre el rastreador (conductor).</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>Ver en mapa</h3>
+        <div class="label">Transporte</div>
+        <select id="tselect"></select>
+        <p class="small">* Se cargan dinámicamente desde el servidor (hasta 20).</p>
+        <button class="btn" id="openViewer">Abrir mapa</button>
+      </div>
+      <div class="card">
+        <h3>Rastreador (conductores)</h3>
+        <p>Todos los conductores usan la misma contraseña: <b>driver123</b>. El usuario (email) cambia:</p>
+        <ul id="driversList" class="small"></ul>
+        <a class="btn" href="./tracker.html">Abrir rastreador</a>
+      </div>
+      <div class="card">
+        <h3>Panel Admin</h3>
+        <p>Admin: <code>admin@demo.com</code> / <b>admin123</b></p>
+        <a class="btn" href="./admin.html">Abrir admin</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function loadTransports(){
+      const sel = document.getElementById('tselect'); sel.innerHTML='';
+      try{ const r = await fetch('/api/transports/public'); const list = r.ok? await r.json(): []; 
+        list.forEach(t=>{ const opt=document.createElement('option'); opt.value=t.id; opt.textContent=`${t.id.toUpperCase()} — ${t.name}`; sel.appendChild(opt); });
+        const allOpt = document.createElement('option'); allOpt.value='all'; allOpt.textContent='(Ver todos)'; sel.appendChild(allOpt);
+      }catch{ const opt=document.createElement('option'); opt.value='t1'; opt.textContent='T1 — Transporte 1'; sel.appendChild(opt); }
+    }
+    function loadDriverList(){
+      const ul = document.getElementById('driversList'); ul.innerHTML='';
+      for(let i=1;i<=20;i++){ const li=document.createElement('li'); li.textContent=`driver${i}@demo.com / driver123 → T${i}`; ul.appendChild(li); }
+    }
+    document.getElementById('openViewer').onclick = () => {
+      const t = document.getElementById('tselect').value;
+      location.href = `./viewer.html?transport=${encodeURIComponent(t)}`;
+    }
+    loadTransports(); loadDriverList();
+  </script>
+</body>
+</html>
