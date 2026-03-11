@@ -1,0 +1,77 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel Admin</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Panel Admin</h1>
+      <p class="small">Inicia sesión con <b>admin@demo.com</b> / <b>admin123</b>. Gestiona transportes, alias y asignaciones.</p>
+    </div>
+
+    <div class="card">
+      <h3>Login Admin</h3>
+      <div class="label">Email</div>
+      <input id="aemail" value="admin@demo.com"/>
+      <div class="label">Contraseña</div>
+      <input id="apass" type="password" value="admin123"/>
+      <p></p>
+      <button class="btn" id="alogin">Entrar</button>
+      <p id="amsg" class="small"></p>
+    </div>
+
+    <div class="card">
+      <h3>Asignaciones y alias (un solo botón)</h3>
+      <div class="label">Transporte</div>
+      <select id="tselect"></select>
+      <div class="label">Usuario (tracker)</div>
+      <select id="uselect"></select>
+
+      <div class="label">Nombre visible del transporte (opcional)</div>
+      <input id="tlabel" placeholder="Ej: Ruta Binaes — Centro" />
+
+      <div class="label">Nombre visible del conductor (opcional)</div>
+      <input id="ulabel" placeholder="Ej: Juan Pérez" />
+
+      <p style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="assignAll" disabled>
+          Asignar (y guardar alias)
+        </button>
+        <button class="btn outline" id="editDrivers" disabled>
+          Editar nombres de conductores (general)
+        </button>
+        <button class="btn outline" id="resetLabels" disabled>
+          Limpiar: volver a “Transporte 1..20”
+        </button>
+      </p>
+      <p id="asmsg" class="small"></p>
+    </div>
+
+    <div class="card">
+      <h3>Credenciales de conductores (20)</h3>
+      <p class="small">Contraseña única para todos: <b>driver123</b></p>
+      <ul id="driversList" class="small"></ul>
+    </div>
+  </div>
+
+  <!-- Modal para edición masiva -->
+  <div id="modalBackdrop">
+    <div id="modal">
+      <h3>Editar nombres de conductores</h3>
+      <div id="modalBody" class="modal-grid"></div>
+      <div class="modal-actions">
+        <button class="btn outline" id="closeModal">Cancelar</button>
+        <button class="btn outline" id="resetAllDrivers">Quitar alias conductores</button>
+        <button class="btn" id="saveAllDrivers">Guardar todos</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/admin.js"></script>
+</body>
+</html>
